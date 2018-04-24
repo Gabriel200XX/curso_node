@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var multiParty = require('connect-multiparty');
 var mongodb = require('mongodb');
 var objectId = require('mongodb').ObjectID;
+var fs = require('fs');
 
 var app = express();
 
@@ -27,19 +28,37 @@ app.get('/', function(req, res) {
 app.post('/api', function(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    var dados = req.body;
+    var date = new Date();
+    var time_stamp = date.getTime();
 
-    db.open( function(err, mongoclient) {
-        mongoclient.collection('postagens', function(err, collection) {
-            collection.insert(dados, function(err, records) {
-                if(err) {
-                    res.json(err);
-                } else {
-                    res.json(records);
-                }
-                mongoclient.close();
-            });
-        })
+    var url_imagem = time_stamp + '_' + req.files.arquivo.originalFilename;
+    
+    var pathOrigem = req.files.arquivo.path;
+    var pathDestino = './uploads/' + url_imagem;
+
+    fs.rename(pathOrigem, pathDestino, function(err) {
+        if(err) {
+            res.status(500).json({ error: err });
+            return;
+        }
+
+        var dados = {
+            url_imagem: url_imagem,
+            titulo: req.body.titulo
+        }
+
+        db.open( function(err, mongoclient) {
+            mongoclient.collection('postagens', function(err, collection) {
+                collection.insert(dados, function(err, records) {
+                    if(err) {
+                        res.json(err);
+                    } else {
+                        res.json(records);
+                    }
+                    mongoclient.close();
+                });
+            })
+        });
     });
 });
 
