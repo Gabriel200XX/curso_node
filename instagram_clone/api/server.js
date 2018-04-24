@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongodb = require('mongodb');
+var objectId = require('mongodb').ObjectID;
 
 var app = express();
 
@@ -32,6 +33,73 @@ app.post('/api', function(req, res) {
                 } else {
                     res.json(records);
                 }
+                mongoclient.close();
+            });
+        })
+    });
+});
+
+app.get('/api', function(req, res) {
+    db.open( function(err, mongoclient) {
+        mongoclient.collection('postagens', function(err, collection) {
+            collection.find().toArray(function(err, results) {
+                if(err) {
+                    res.json(err);
+                } else {
+                    res.json(results);
+                }
+                mongoclient.close();
+            });
+        })
+    });
+});
+
+app.get('/api/:id', function(req, res) {
+    db.open( function(err, mongoclient) {
+        mongoclient.collection('postagens', function(err, collection) {
+            collection.find(objectId(req.params.id)).toArray(function(err, results) {
+                if(err) {
+                    res.json(err);
+                } else {
+                    res.json(results);
+                }
+                mongoclient.close();
+            });
+        })
+    });
+});
+
+app.put('/api/:id', function(req, res) {
+    db.open( function(err, mongoclient) {
+        mongoclient.collection('postagens', function(err, collection) {
+            collection.update(
+                { _id: objectId(req.params.id) },
+                { $set: { titulo: req.body.titulo } },
+                {  },
+                function(err, records) {
+                    if(err) {
+                        res.json(err);
+                    } else {
+                        res.json(records);
+                    }
+
+                    mongoclient.close();
+                }
+            );
+        })
+    });
+});
+
+app.delete('/api/:id', function(req, res) {
+    db.open( function(err, mongoclient) {
+        mongoclient.collection('postagens', function(err, collection) {
+            collection.remove({ _id: objectId(req.params.id) }, function(err, records) {
+                if(err) {
+                    res.json(err);
+                } else {
+                    res.json(records);
+                }
+                
                 mongoclient.close();
             });
         })
